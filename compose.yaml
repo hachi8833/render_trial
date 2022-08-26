@@ -1,0 +1,77 @@
+version: '2.4'
+
+x-app: &app
+  build:
+    context: .dockerdev
+    dockerfile: Dockerfile
+    args:
+      DISTRO_NAME: 'bullseye'
+      RUBY_VERSION: '3.1.2'
+      BUNDLER_VERSION: '2.3.20'
+      PG_MAJOR: '14'
+  image: render_trial:1.0.0
+  environment: &env
+    RAILS_ENV: ${RAILS_ENV:-development}
+  tmpfs:
+    - /tmp
+    - /app/tmp/pids
+  env_file: .env
+
+x-backend: &backend
+  <<: *app
+  stdin_open: true
+  tty: true
+  volumes:
+    - .:/app:cached
+    - bundle:/usr/local/bundle
+    - rails_cache:/app/tmp/cache
+    - .dockerdev/.psqlrc:/root/.psqlrc:ro
+    - .dockerdev/.bashrc:/root/.bashrc:ro
+    - .dockerdev/.irbrc:/root/.irbrc:ro
+  environment: &backend_environment
+    <<: *env
+    RUBY_YJIT_ENABLE: 1
+    DATABASE_URL: postgres://postgres:postgres@postgres:5432
+    MALLOC_ARENA_MAX: 2
+    BOOTSNAP_CACHE_DIR: /usr/local/bundle/_bootsnap
+    XDG_DATA_HOME: /app/tmp/caches
+    BINDING: 0.0.0.0
+    HISTFILE: /usr/local/hist/.bash_history
+    PSQL_HISTFILE: /usr/local/hist/.psql_history
+    IRB_HISTFILE: /usr/local/hst/.irb_history
+    EDITOR: vi
+  depends_on:
+    postgres:
+      condition: service_healthy
+
+services:
+  rails:
+    <<: *backend
+    command: bundle exec rails
+
+  web:
+    <<: *backend
+    command: bin/dev
+    ports:
+      - '3000:3000'
+      - '35729:35729'
+
+  postgres:
+    image: postgres:14
+    volumes:
+      - .psqlrc:/root/.psqlrc:ro
+      - postgres:/var/lib/postgresql/data
+    environment:
+      PSQL_HISTFILE: /user/local/hist/.psql_history
+      POSTGRES_HOST_AUTH_METHOD: trust
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - 5432
+    healthcheck:
+      test: pg_isready -U postgres -h 127.0.0.1
+      interval: 5s
+
+volumes:
+  bundle:
+  rails_cache:
+  postgres:

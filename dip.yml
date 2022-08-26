@@ -1,0 +1,136 @@
+version: '7.1'
+
+# Define default environment variables to pass
+# to Docker Compose
+environment:
+  RAILS_ENV: development
+
+compose:
+  files:
+    - compose.yaml
+  project_name: enno_docker
+
+interaction:
+  # This command spins up a Rails container with the requried dependencies (such as databases),
+  # and opens a terminal within it.
+  runner:
+    description: Open a Bash shell within a Rails container (with dependencies up)
+    service: rails
+    command: /bin/bash
+
+  # Run a Rails container without any dependent services (useful for non-Rails scripts)
+  sh:
+    description: Run an arbitrary script within a container (or open a shell without deps)
+    service: rails
+    command: /bin/bash
+    compose_run_options: [ no-deps ]
+
+  # A shortcut to run Bundler commands
+  bundle:
+    description: Run Bundler commands
+    service: rails
+    command: bundle
+    compose_run_options: [ no-deps ]
+
+  rails:
+    description: Run Rails commands
+    service: rails
+    command: bin/rails
+    subcommands:
+      s:
+        description: Run Rails server at http://localhost:3000
+        service: web
+        compose:
+          run_options: [ service-ports, use-aliases ]
+      test:
+        description: Run unit tests
+        service: rails
+        command: bundle exec rails test
+        environment:
+          RAILS_ENV: test
+
+  dev:
+    description: Start rails dev server for bin/dev
+    service: web
+    command: bin/dev
+    compose_run_options: [ service-ports, use-aliases ]
+
+  setup:
+    description: Run bin/setup
+    service: web
+    command: bin/setup
+    compose_run_options: [ service-ports, use-aliases ]
+
+  psql:
+    description: Run Postgres psql console
+    service: postgres
+    command: psql -h postgres -U postgres
+
+  minitest:
+    description: Run minitest
+    service: rails
+    environment:
+      RAILS_ENV: test
+    command: bin/rails test
+
+  cop:
+    description: Run rubocop
+    service: rails
+    default_args: -a --format offenses
+    command: bundle exec rubocop
+    compose_run_options: [no-deps]
+
+  pg_dump:
+    description: Run pg_dump command
+    service: postgres
+    command: pg_dump -h postgres -U postgres
+    compose_run_options: [no-deps]
+
+  im:
+    description: Run ./bin/importmap
+    service: rails
+    command: importmap
+
+  best:
+    description: Run rails_best_practices
+    service: rails
+    command: bundle exec rails_best_practices .
+
+  brake:
+    description: Run brakeman
+    service: rails
+    command: bundle exec brakeman -o /dev/stdout
+
+  reek:
+    description: Run reek
+    service: rails
+    command: reek -c reek.yml app/ test/
+
+  audit:
+    description: Run bundler-audit
+    service: rails
+    command: bundle exec bundle-audit
+
+  steep:
+    description: Run Steep check
+    service: rails
+    command: bundle exec steep check
+
+  inspect_all:
+    description: Run all checkers
+    service: rails
+    command: /bin/bash -c "./bin/rails about && ./bin/rails test && bundle exec rubocop -a && bundle exec bundle-audit && bundle exec rails_best_practices . && bundle exec license_finder &&  bundle exec brakeman -o /dev/stdout"
+
+  clean_cache:
+    description: Delete cache files on the host machine
+    command: rm -rf $(pwd)/tmp/cache/*
+
+provision:
+  - dip compose down --volumes
+  - dip clean_cache
+  - dip compose up -d postgres
+  - dip setup
+  - dip setup RAILS_ENV=test
+  - dip setup RAILS_ENV=production
+  - dip sh -c "rm -rf tmp/caching-dev.txt"
+  - dip rails dev:cache
