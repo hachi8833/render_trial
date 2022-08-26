@@ -7,7 +7,7 @@ x-app: &app
     args:
       DISTRO_NAME: 'bullseye'
       RUBY_VERSION: '3.1.2'
-      BUNDLER_VERSION: '2.3.20'
+      BUNDLER_VERSION: '2.3.21'
       PG_MAJOR: '14'
   image: render_trial:1.0.0
   environment: &env
