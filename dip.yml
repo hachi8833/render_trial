@@ -8,7 +8,7 @@ environment:
 compose:
   files:
     - compose.yaml
-  project_name: enno_docker
+  project_name: render_trial
 
 interaction:
   # This command spins up a Rails container with the requried dependencies (such as databases),
