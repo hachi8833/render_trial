@@ -63,8 +63,8 @@ interaction:
 
   psql:
     description: Run Postgres psql console
-    service: postgres
-    command: psql -h postgres -U postgres
+    service: postgres_render
+    command: psql -h postgres_render -U postgres
 
   minitest:
     description: Run minitest
@@ -83,7 +83,7 @@ interaction:
   pg_dump:
     description: Run pg_dump command
     service: postgres
-    command: pg_dump -h postgres -U postgres
+    command: pg_dump -h postgres_render -U postgres
     compose_run_options: [no-deps]
 
   im:
@@ -128,7 +128,7 @@ interaction:
 provision:
   - dip compose down --volumes
   - dip clean_cache
-  - dip compose up -d postgres
+  - dip compose up -d postgres_render
   - dip setup
   - dip setup RAILS_ENV=test
   - dip setup RAILS_ENV=production

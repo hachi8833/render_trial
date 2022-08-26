@@ -31,7 +31,7 @@ x-backend: &backend
   environment: &backend_environment
     <<: *env
     RUBY_YJIT_ENABLE: 1
-    DATABASE_URL: postgres://postgres:postgres@postgres:5432
+    DATABASE_URL: postgres://postgres:postgres@postgres_render:5432
     MALLOC_ARENA_MAX: 2
     BOOTSNAP_CACHE_DIR: /usr/local/bundle/_bootsnap
     XDG_DATA_HOME: /app/tmp/caches
