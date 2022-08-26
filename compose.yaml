@@ -41,7 +41,7 @@ x-backend: &backend
     IRB_HISTFILE: /usr/local/hst/.irb_history
     EDITOR: vi
   depends_on:
-    postgres:
+    postgres_render:
       condition: service_healthy
 
 services:
@@ -56,11 +56,11 @@ services:
       - '3000:3000'
       - '35729:35729'
 
-  postgres:
+  postgres_render:
     image: postgres:14
     volumes:
       - .psqlrc:/root/.psqlrc:ro
-      - postgres:/var/lib/postgresql/data
+      - postgres_render:/var/lib/postgresql/data
     environment:
       PSQL_HISTFILE: /user/local/hist/.psql_history
       POSTGRES_HOST_AUTH_METHOD: trust
@@ -74,4 +74,4 @@ services:
 volumes:
   bundle:
   rails_cache:
-  postgres:
+  postgres_render:
